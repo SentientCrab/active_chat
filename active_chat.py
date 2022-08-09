@@ -6,11 +6,27 @@ import datetime
 import time
 import os
 import sys
+import ctypes
 
+def getWindow():
+    hwnd = ctypes.windll.user32.GetForegroundWindow()
+    length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
+    buff = ctypes.create_unicode_buffer(length + 1)
+    ctypes.windll.user32.GetWindowTextW(hwnd, buff, length + 1)
+    return (buff.value, hwnd) # buff.value is the title of the window, hwnd is the window handle
+    
+CURRENT_WINDOW_NAME = getWindow()
+
+if CURRENT_WINDOW_NAME[0].find("Command")==CURRENT_WINDOW_NAME[0].find("cmd"):
+    print("I think you switched programs too fast, you have to wait a little bit before switching windows")
+    print("Hit space if you think this is an error")
+    os.system('pause')
+else:
+    print("ready")
+    
 WAIT_TIME_IN_MINS = 5 #how many mins till they disappear from active chatter list
 ACCESS_TOKEN = '' #replace this
 
-ACCESS_TOKEN
 server = 'irc.chat.twitch.tv'
 port = 6667
 nickname = 'ActiveChatWatcher'
@@ -21,7 +37,7 @@ allChatters=SortedList()
 activeChatterDict={
     "fakeName" : 0
 }
-currentOldestPoster="fakeName"
+currentOldestPoster="fakeName" #there has to be a better way but I'm lazy
 
 sock = socket.socket()
 sock.connect((server, port))
@@ -35,23 +51,27 @@ pausePrintChat=False
 
 def toggleActiceChat():
     global isOnActiveChat
-    isOnActiveChat=not isOnActiveChat
-    
-    os.system('clear')
-    if isOnActiveChat:
-        print("Active Chatters: ")
-        print("=====================================")
-        for a in activeChatterList:
-            print(a)
-    else:
-        print("All Chatters: ")
-        print("=====================================")
-        for a in allChatters:
-            print(a)
+    activeChatterList = [*activeChatterDict]
+    if CURRENT_WINDOW_NAME == getWindow():
+        isOnActiveChat=not isOnActiveChat
+        
+        os.system('cls')
+        if isOnActiveChat:
+            print("Active Chatters: ")
+            print("=====================================")
+            for a in activeChatterList:
+                print(a)
+        else:
+            print("All Chatters: ")
+            print("=====================================")
+            for a in allChatters:
+                print(a)
     
 def togglePauseChat():
     global pausePrintChat
-    pausePrintChat=not pausePrintChat
+    
+    if CURRENT_WINDOW_NAME == getWindow():
+        pausePrintChat=not pausePrintChat
 
 keyboard.add_hotkey("space", lambda: toggleActiceChat())
 keyboard.add_hotkey("p", lambda: togglePauseChat())
